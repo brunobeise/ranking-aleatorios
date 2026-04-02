@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 export async function createPlayer(formData: FormData) {
   const name = formData.get("name") as string;
@@ -15,7 +15,7 @@ export async function createPlayer(formData: FormData) {
     data: { name: name.trim(), photoUrl },
   });
 
-  revalidateTag("ranking", "max");
+  updateTag("ranking");
 }
 
 export async function updatePlayer(id: string, formData: FormData) {
@@ -31,10 +31,10 @@ export async function updatePlayer(id: string, formData: FormData) {
     data: { name: name.trim(), photoUrl },
   });
 
-  revalidateTag("ranking", "max");
+  updateTag("ranking");
 }
 
 export async function deletePlayer(id: string) {
   await prisma.player.delete({ where: { id } });
-  revalidateTag("ranking", "max");
+  updateTag("ranking");
 }

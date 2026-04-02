@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
 interface MatchInput {
@@ -84,7 +84,7 @@ export async function createMatch(data: MatchInput) {
     },
   });
 
-  revalidateTag("ranking", "max");
+  updateTag("ranking");
   redirect("/");
 }
 
@@ -118,11 +118,11 @@ export async function updateMatch(id: string, data: MatchInput) {
     }),
   ]);
 
-  revalidateTag("ranking", "max");
+  updateTag("ranking");
   redirect("/");
 }
 
 export async function deleteMatch(id: string) {
   await prisma.match.delete({ where: { id } });
-  revalidateTag("ranking", "max");
+  updateTag("ranking");
 }
