@@ -41,7 +41,9 @@ function calculateMatchResult(
     team2Games += set.team2Score;
   }
 
-  const team1Won = team1Sets > team2Sets;
+  // Se sets empatados (número par de sets), desempata pelo saldo de games
+  const team1Won =
+    team1Sets !== team2Sets ? team1Sets > team2Sets : team1Games > team2Games;
 
   const totalGames = team1Games + team2Games;
   let bonus1 = 0;

@@ -22,14 +22,38 @@ function validateMatch(data: MatchInput) {
   for (const set of data.sets) {
     const max = Math.max(set.team1Score, set.team2Score);
     const min = Math.min(set.team1Score, set.team2Score);
-    if (max < 6 || max > 7 || min < 0 || min > 5) {
+    if (max < 6 || max > 7 || min < 0) {
       throw new Error(
-        `Placar inválido: ${set.team1Score}x${set.team2Score}. Sets devem ser de 6x0 a 7x5`
+        `Placar inválido: ${set.team1Score}x${set.team2Score}`
       );
     }
-    if (max === 7 && min < 5) {
+    if (max === 6 && min > 4) {
       throw new Error(
-        `Placar inválido: ${set.team1Score}x${set.team2Score}. Se um time faz 7, o outro deve ter pelo menos 5`
+        `Placar inválido: ${set.team1Score}x${set.team2Score}. Set de 6 deve ter no máximo 4 do adversário`
+      );
+    }
+    if (max === 7 && (min < 5 || min > 6)) {
+      throw new Error(
+        `Placar inválido: ${set.team1Score}x${set.team2Score}. Set de 7 deve ser 7x5 ou 7x6`
+      );
+    }
+  }
+
+  // Verificar empate quando número de sets for par
+  if (data.sets.length % 2 === 0) {
+    let team1Sets = 0;
+    let team2Sets = 0;
+    let team1Games = 0;
+    let team2Games = 0;
+    for (const set of data.sets) {
+      if (set.team1Score > set.team2Score) team1Sets++;
+      else team2Sets++;
+      team1Games += set.team1Score;
+      team2Games += set.team2Score;
+    }
+    if (team1Sets === team2Sets && team1Games === team2Games) {
+      throw new Error(
+        "Partida empatada! Com número par de sets e saldo de games igual, não é possível determinar o vencedor"
       );
     }
   }
