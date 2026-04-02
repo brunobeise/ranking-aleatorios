@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Player {
+  id        String        @id @default(cuid())
+  name      String
+  photoUrl  String?
+  createdAt DateTime      @default(now())
+  matches   MatchPlayer[]
+}
+
+model Match {
+  id        String        @id @default(cuid())
+  createdAt DateTime      @default(now())
+  players   MatchPlayer[]
+  sets      Set[]
+}
+
+model MatchPlayer {
+  id       String @id @default(cuid())
+  matchId  String
+  playerId String
+  team     Int // 1 or 2
+
+  match  Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, playerId])
+  @@index([matchId])
+  @@index([playerId])
+}
+
+model Set {
+  id         String @id @default(cuid())
+  matchId    String
+  team1Score Int
+  team2Score Int
+
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
+}
