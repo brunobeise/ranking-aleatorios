@@ -20,21 +20,14 @@ function validateMatch(data: MatchInput) {
     throw new Error("Pelo menos 1 set é necessário");
   }
   for (const set of data.sets) {
-    const max = Math.max(set.team1Score, set.team2Score);
-    const min = Math.min(set.team1Score, set.team2Score);
-    if (max < 6 || max > 7 || min < 0) {
+    if (set.team1Score < 0 || set.team1Score > 10 || set.team2Score < 0 || set.team2Score > 10) {
       throw new Error(
-        `Placar inválido: ${set.team1Score}x${set.team2Score}`
+        `Placar inválido: ${set.team1Score}x${set.team2Score}. Valores devem ser entre 0 e 10`
       );
     }
-    if (max === 6 && min > 4) {
+    if (set.team1Score === set.team2Score) {
       throw new Error(
-        `Placar inválido: ${set.team1Score}x${set.team2Score}. Set de 6 deve ter no máximo 4 do adversário`
-      );
-    }
-    if (max === 7 && (min < 5 || min > 6)) {
-      throw new Error(
-        `Placar inválido: ${set.team1Score}x${set.team2Score}. Set de 7 deve ser 7x5 ou 7x6`
+        `Placar inválido: ${set.team1Score}x${set.team2Score}. O set não pode terminar empatado`
       );
     }
   }

@@ -216,7 +216,7 @@ export function MatchForm({ players, editData }: MatchFormProps) {
               <input
                 type="number"
                 min={0}
-                max={7}
+                max={10}
                 value={set.team1Score}
                 onChange={(e) =>
                   updateSet(i, "team1Score", parseInt(e.target.value) || 0)
@@ -228,7 +228,7 @@ export function MatchForm({ players, editData }: MatchFormProps) {
               <input
                 type="number"
                 min={0}
-                max={7}
+                max={10}
                 value={set.team2Score}
                 onChange={(e) =>
                   updateSet(i, "team2Score", parseInt(e.target.value) || 0)
