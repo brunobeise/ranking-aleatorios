@@ -2,7 +2,6 @@
 
 import { prisma } from "@/lib/prisma";
 import { updateTag } from "next/cache";
-import { redirect } from "next/navigation";
 
 interface MatchInput {
   team1: [string, string];
@@ -55,7 +54,7 @@ function validateMatch(data: MatchInput) {
 export async function createMatch(data: MatchInput) {
   validateMatch(data);
 
-  const matchDate = data.date ? new Date(data.date) : new Date();
+  const matchDate = data.date ? new Date(data.date + "T12:00:00") : new Date();
 
   await prisma.match.create({
     data: {
@@ -78,13 +77,12 @@ export async function createMatch(data: MatchInput) {
   });
 
   updateTag("ranking");
-  redirect("/");
 }
 
 export async function updateMatch(id: string, data: MatchInput) {
   validateMatch(data);
 
-  const matchDate = data.date ? new Date(data.date) : undefined;
+  const matchDate = data.date ? new Date(data.date + "T12:00:00") : undefined;
 
   await prisma.$transaction([
     prisma.matchPlayer.deleteMany({ where: { matchId: id } }),
@@ -112,7 +110,6 @@ export async function updateMatch(id: string, data: MatchInput) {
   ]);
 
   updateTag("ranking");
-  redirect("/");
 }
 
 export async function deleteMatch(id: string) {

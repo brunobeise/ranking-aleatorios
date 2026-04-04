@@ -3,8 +3,23 @@ import { Navbar } from "@/components/navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Aleatórios Padel - Ranking",
-  description: "Sistema de ranking de padel do grupo Aleatórios",
+  title: "Aleatórios Padel — Ranking",
+  description:
+    "Ranking oficial do grupo Aleatórios Padel. Veja placares, estatísticas e histórico de partidas.",
+  openGraph: {
+    title: "Aleatórios Padel — Ranking",
+    description:
+      "Ranking oficial do grupo Aleatórios Padel. Veja placares, estatísticas e histórico de partidas.",
+    type: "website",
+    locale: "pt_BR",
+    siteName: "Aleatórios Padel",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Aleatórios Padel — Ranking",
+    description:
+      "Ranking oficial do grupo Aleatórios Padel. Veja placares, estatísticas e histórico de partidas.",
+  },
 };
 
 export default function RootLayout({

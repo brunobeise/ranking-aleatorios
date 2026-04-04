@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createMatch, updateMatch } from "@/actions/matches";
 
 interface Player {
@@ -22,9 +23,11 @@ interface MatchFormProps {
     sets: SetScore[];
     date: string;
   };
+  onSuccess?: () => void;
 }
 
-export function MatchForm({ players, editData }: MatchFormProps) {
+export function MatchForm({ players, editData, onSuccess }: MatchFormProps) {
+  const router = useRouter();
   const [team1, setTeam1] = useState<[string, string]>(
     editData?.team1 || ["", ""]
   );
@@ -47,8 +50,58 @@ export function MatchForm({ players, editData }: MatchFormProps) {
   }
 
   function updateSet(index: number, field: keyof SetScore, value: number) {
+    const clamped = Math.max(0, Math.min(10, value));
     setSets((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, [field]: value } : s))
+      prev.map((s, i) => (i === index ? { ...s, [field]: clamped } : s))
+    );
+  }
+
+  function ScoreInput({
+    value,
+    onChange,
+    colorClass,
+  }: {
+    value: number;
+    onChange: (v: number) => void;
+    colorClass: string;
+  }) {
+    return (
+      <div className="flex flex-col items-center gap-1.5 w-full">
+        <button
+          type="button"
+          onClick={() => onChange(Math.min(10, value + 1))}
+          className="w-full h-9 flex items-center justify-center rounded-lg bg-surface-light border border-surface-border text-muted hover:text-foreground hover:border-neon/30 active:bg-surface transition-colors text-lg font-bold leading-none"
+        >
+          +
+        </button>
+        <input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={value}
+          onFocus={(e) => e.target.select()}
+          onChange={(e) => {
+            const val = e.target.value.replace(/\D/g, "");
+            if (val === "") {
+              onChange(0);
+              return;
+            }
+            const num = parseInt(val, 10);
+            if (num >= 0 && num <= 10) {
+              onChange(num);
+            }
+          }}
+          className={`input-dark w-full text-center tabular-nums font-bold text-2xl py-3 ${colorClass}`}
+          required
+        />
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(0, value - 1))}
+          className="w-full h-9 flex items-center justify-center rounded-lg bg-surface-light border border-surface-border text-muted hover:text-foreground hover:border-neon/30 active:bg-surface transition-colors text-lg font-bold leading-none"
+        >
+          −
+        </button>
+      </div>
     );
   }
 
@@ -73,9 +126,13 @@ export function MatchForm({ players, editData }: MatchFormProps) {
       } else {
         await createMatch(data);
       }
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push("/");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar partida");
-    } finally {
       setLoading(false);
     }
   }
@@ -204,48 +261,60 @@ export function MatchForm({ players, editData }: MatchFormProps) {
         {sets.map((set, i) => (
           <div
             key={i}
-            className="flex items-center gap-3 animate-scale-in"
+            className="animate-scale-in rounded-lg border border-surface-border/50 bg-surface-light/30 p-3"
           >
-            <span
-              className="text-xs text-muted font-bold uppercase w-14"
-              style={{ fontFamily: "var(--font-condensed)" }}
-            >
-              Set {i + 1}
-            </span>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={0}
-                max={10}
-                value={set.team1Score}
-                onChange={(e) =>
-                  updateSet(i, "team1Score", parseInt(e.target.value) || 0)
-                }
-                className="input-dark w-16 text-center tabular-nums font-bold text-neon"
-                required
-              />
-              <span className="text-muted font-bold text-lg">×</span>
-              <input
-                type="number"
-                min={0}
-                max={10}
-                value={set.team2Score}
-                onChange={(e) =>
-                  updateSet(i, "team2Score", parseInt(e.target.value) || 0)
-                }
-                className="input-dark w-16 text-center tabular-nums font-bold text-red-400"
-                required
-              />
-            </div>
-            {sets.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeSet(i)}
-                className="text-red-500/60 hover:text-red-400 text-xs font-bold uppercase tracking-wide transition-colors"
+            <div className="flex items-center justify-between mb-2">
+              <span
+                className="text-xs text-muted font-bold uppercase"
+                style={{ fontFamily: "var(--font-condensed)" }}
               >
-                Remover
-              </button>
-            )}
+                Set {i + 1}
+              </span>
+              {sets.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeSet(i)}
+                  className="text-red-500/60 hover:text-red-400 text-xs font-bold uppercase tracking-wide transition-colors"
+                >
+                  Remover
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 flex flex-col items-center gap-1">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-neon" />
+                  <span
+                    className="text-[10px] font-bold uppercase text-neon/70 tracking-wider"
+                    style={{ fontFamily: "var(--font-condensed)" }}
+                  >
+                    Time 1
+                  </span>
+                </div>
+                <ScoreInput
+                  value={set.team1Score}
+                  onChange={(v) => updateSet(i, "team1Score", v)}
+                  colorClass="text-neon border-neon/20"
+                />
+              </div>
+              <span className="text-muted font-bold text-xl mt-5">×</span>
+              <div className="flex-1 flex flex-col items-center gap-1">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-red-500" />
+                  <span
+                    className="text-[10px] font-bold uppercase text-red-400/70 tracking-wider"
+                    style={{ fontFamily: "var(--font-condensed)" }}
+                  >
+                    Time 2
+                  </span>
+                </div>
+                <ScoreInput
+                  value={set.team2Score}
+                  onChange={(v) => updateSet(i, "team2Score", v)}
+                  colorClass="text-red-400 border-red-500/20"
+                />
+              </div>
+            </div>
           </div>
         ))}
       </div>

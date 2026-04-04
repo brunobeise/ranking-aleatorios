@@ -19,13 +19,9 @@ function DeltaBadge({ delta }: { delta: number }) {
   );
 }
 
-function MatchRow({ match }: { match: MatchWithDeltas }) {
+function MatchCard({ match }: { match: MatchWithDeltas }) {
   const team1 = match.players.filter((p) => p.team === 1);
   const team2 = match.players.filter((p) => p.team === 2);
-
-  const setsDisplay = match.sets
-    .map((s) => `${s.team1Score}-${s.team2Score}`)
-    .join(" / ");
 
   const date = new Date(match.createdAt).toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -34,54 +30,61 @@ function MatchRow({ match }: { match: MatchWithDeltas }) {
   });
 
   return (
-    <tr className="border-b border-surface-border/50 hover:bg-surface-light/50 transition-colors">
-      <td className="py-3 pr-3 text-xs text-muted whitespace-nowrap">{date}</td>
-      <td className="py-3 pr-3">
-        <div className="space-y-0.5">
-          {team1.map((p) => (
-            <div key={p.playerId} className="flex items-center gap-1.5">
-              <span
-                className={`text-sm ${
-                  match.team1Won ? "font-semibold text-foreground" : "text-muted"
-                }`}
-              >
-                {p.playerName}
-              </span>
-              <DeltaBadge delta={p.delta} />
-            </div>
-          ))}
+    <div className="border-b border-surface-border/50 py-3 px-1">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-[10px] text-muted uppercase tracking-wider font-bold" style={{ fontFamily: "var(--font-condensed)" }}>{date}</span>
+        {match.team1Won !== undefined && (
+          <span className="text-[10px] font-bold uppercase tracking-wider text-neon/60" style={{ fontFamily: "var(--font-condensed)" }}>
+            {match.team1Won ? "Time 1 venceu" : "Time 2 venceu"}
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2">
+        {/* Time 1 */}
+        <div className={`flex-1 min-w-0 ${match.team1Won ? "" : "opacity-60"}`}>
+          <div className="space-y-0.5">
+            {team1.map((p) => (
+              <div key={p.playerId} className="flex items-center gap-1">
+                <span className={`text-sm truncate ${match.team1Won ? "font-semibold text-foreground" : "text-muted"}`}>
+                  {p.playerName}
+                </span>
+                <DeltaBadge delta={p.delta} />
+              </div>
+            ))}
+          </div>
         </div>
-      </td>
-      <td className="py-3 px-3 text-center">
-        <span
-          className="text-sm font-bold tabular-nums text-foreground"
-          style={{ fontFamily: "var(--font-condensed)" }}
-        >
-          {setsDisplay}
-        </span>
-      </td>
-      <td className="py-3 pl-3">
-        <div className="space-y-0.5">
-          {team2.map((p) => (
-            <div
-              key={p.playerId}
-              className="flex items-center gap-1.5 justify-end"
-            >
-              <DeltaBadge delta={p.delta} />
-              <span
-                className={`text-sm ${
-                  !match.team1Won
-                    ? "font-semibold text-foreground"
-                    : "text-muted"
-                }`}
-              >
-                {p.playerName}
+
+        {/* Placares dos sets - vertical */}
+        <div className="flex flex-col items-center gap-1 shrink-0">
+          {match.sets.map((s, i) => (
+            <div key={i} className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-surface-light/60 border border-surface-border/40">
+              <span className={`text-xs font-bold tabular-nums ${s.team1Score > s.team2Score ? "text-neon" : "text-muted"}`}>
+                {s.team1Score}
+              </span>
+              <span className="text-muted text-[10px]">-</span>
+              <span className={`text-xs font-bold tabular-nums ${s.team2Score > s.team1Score ? "text-red-400" : "text-muted"}`}>
+                {s.team2Score}
               </span>
             </div>
           ))}
         </div>
-      </td>
-    </tr>
+
+        {/* Time 2 */}
+        <div className={`flex-1 min-w-0 ${!match.team1Won ? "" : "opacity-60"}`}>
+          <div className="space-y-0.5">
+            {team2.map((p) => (
+              <div key={p.playerId} className="flex items-center gap-1 justify-end">
+                <DeltaBadge delta={p.delta} />
+                <span className={`text-sm truncate ${!match.team1Won ? "font-semibold text-foreground" : "text-muted"}`}>
+                  {p.playerName}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -100,25 +103,10 @@ export function MatchHistory({ matches }: { matches: MatchWithDeltas[] }) {
 
   return (
     <div>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr
-              className="border-b border-surface-border text-xs uppercase tracking-wider text-muted"
-              style={{ fontFamily: "var(--font-condensed)" }}
-            >
-              <th className="pb-2 pr-3 text-left">Data</th>
-              <th className="pb-2 pr-3 text-left">Time 1</th>
-              <th className="pb-2 px-3 text-center">Placar</th>
-              <th className="pb-2 pl-3 text-right">Time 2</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginated.map((match) => (
-              <MatchRow key={match.id} match={match} />
-            ))}
-          </tbody>
-        </table>
+      <div>
+        {paginated.map((match) => (
+          <MatchCard key={match.id} match={match} />
+        ))}
       </div>
 
       {totalPages > 1 && (
