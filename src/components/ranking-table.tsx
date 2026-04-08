@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { RankedPlayer } from "@/domain/types";
 
 function getMedalEmoji(position: number) {
@@ -73,9 +74,10 @@ export function TopThree({ players }: { players: RankedPlayer[] }) {
         const player = top[idx];
         if (!player) return null;
         return (
-          <div
+          <Link
             key={player.id}
-            className="flex flex-col items-center animate-slide-up"
+            href={`/jogador/${player.id}`}
+            className="flex flex-col items-center animate-slide-up group"
             style={{ animationDelay: `${i * 0.1}s` }}
           >
             <div className={`relative ${idx === 0 ? "mb-1" : ""}`}>
@@ -91,7 +93,7 @@ export function TopThree({ players }: { players: RankedPlayer[] }) {
               )}
             </div>
             <p
-              className="font-bold mt-2 text-sm text-foreground truncate max-w-[90px] text-center"
+              className="font-bold mt-2 text-sm text-foreground truncate] text-center group-hover:text-neon transition-colors"
               style={{ fontFamily: "var(--font-condensed)" }}
             >
               {player.name}
@@ -106,7 +108,7 @@ export function TopThree({ players }: { players: RankedPlayer[] }) {
                 {posLabels[i]}
               </span>
             </div>
-          </div>
+          </Link>
         );
       })}
     </div>
@@ -168,13 +170,13 @@ export function RankingTable({ players }: { players: RankedPlayer[] }) {
                 )}
               </td>
               <td className="py-3.5 pr-2">
-                <div className="flex items-center gap-2.5">
+                <Link href={`/jogador/${player.id}`} className="flex items-center gap-2.5 group">
                   <PlayerAvatar
                     name={player.name}
                     photoUrl={player.photoUrl}
                   />
                   <div className="min-w-0">
-                    <span className="font-semibold text-sm block truncate">
+                    <span className="font-semibold text-sm block truncate group-hover:text-neon transition-colors">
                       {player.name}
                     </span>
                     {player.streak >= 2 && (
@@ -183,7 +185,7 @@ export function RankingTable({ players }: { players: RankedPlayer[] }) {
                       </span>
                     )}
                   </div>
-                </div>
+                </Link>
               </td>
               <td className="py-3.5 pr-2 text-right">
                 <span
