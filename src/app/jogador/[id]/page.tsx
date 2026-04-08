@@ -1,5 +1,6 @@
-import { cacheLife, cacheTag } from "next/cache";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import Link from "next/link";
 import { getRankingWithHistory } from "@/lib/data";
 import { MatchWithDeltas, RankedPlayer } from "@/domain/types";
@@ -315,16 +316,9 @@ function computePlayerStats(
   };
 }
 
-export default async function PlayerProfilePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag("ranking");
-
-  const { id } = await params;
+async function PlayerProfile({ paramsPromise }: { paramsPromise: Promise<{ id: string }> }) {
+  await connection();
+  const { id } = await paramsPromise;
   const { ranking, matchHistory } = await getRankingWithHistory();
 
   const player = ranking.find((p) => p.id === id);
@@ -336,7 +330,7 @@ export default async function PlayerProfilePage({
   const position = ranking.findIndex((p) => p.id === id) + 1;
 
   return (
-    <div>
+    <>
       {/* Header com voltar */}
       <div className="mb-6">
         <Link
@@ -472,6 +466,26 @@ export default async function PlayerProfilePage({
           </div>
         )}
       </div>
+    </>
+  );
+}
+
+export default function PlayerProfilePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <div>
+      <Suspense
+        fallback={
+          <div className="text-center py-16 text-muted">
+            <p className="text-sm">Carregando perfil...</p>
+          </div>
+        }
+      >
+        <PlayerProfile paramsPromise={params} />
+      </Suspense>
     </div>
   );
 }
