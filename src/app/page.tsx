@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
+import Link from "next/link";
 import { getRankingWithHistory } from "@/lib/data";
 import { TopThree, RankingTable } from "@/components/ranking-table";
 import { SharePodiumButton } from "@/components/share-ranking";
@@ -46,6 +47,13 @@ export default async function HomePage() {
             Historico de Partidas
           </h2>
           <div className="flex-1 h-px bg-linear-to-r from-neon/20 to-transparent" />
+          <Link
+            href="/partidas"
+            className="text-xs font-bold uppercase tracking-wider text-muted hover:text-neon transition-colors"
+            style={{ fontFamily: "var(--font-condensed)" }}
+          >
+            Ver todas
+          </Link>
         </div>
         <MatchHistory matches={matchHistory} />
       </div>
