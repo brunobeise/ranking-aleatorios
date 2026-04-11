@@ -179,10 +179,13 @@ interface StatCardProps {
   title: string;
   playerName: string;
   playerPhoto: string | null;
-  detail: string;
+  wins: number;
+  losses: number;
+  total: number;
+  legend: string;
 }
 
-function StatCard({ title, playerName, playerPhoto, detail }: StatCardProps) {
+function StatCard({ title, playerName, playerPhoto, wins, losses, total, legend }: StatCardProps) {
   const initials = playerName
     .split(" ")
     .map((n) => n[0])
@@ -190,31 +193,57 @@ function StatCard({ title, playerName, playerPhoto, detail }: StatCardProps) {
     .toUpperCase()
     .slice(0, 2);
 
+  const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+  const winPercent = total > 0 ? (wins / total) * 100 : 0;
+
   return (
-    <div className="card-dark-glow p-4 flex flex-col items-center text-center gap-2">
+    <div className="card-dark-glow p-4 flex flex-col gap-3">
       <span
         className="text-[11px] font-bold uppercase tracking-wider text-muted"
         style={{ fontFamily: "var(--font-condensed)" }}
       >
         {title}
       </span>
-      {playerPhoto ? (
-        <img
-          src={playerPhoto}
-          alt={playerName}
-          className="w-12 h-12 rounded-full object-cover ring-2 ring-surface-border"
-        />
-      ) : (
-        <div className="w-12 h-12 rounded-full bg-surface-light flex items-center justify-center text-neon font-bold text-sm ring-2 ring-surface-border">
-          {initials}
+      <div className="flex items-center gap-3">
+        {playerPhoto ? (
+          <img
+            src={playerPhoto}
+            alt={playerName}
+            className="w-10 h-10 rounded-full object-cover ring-2 ring-surface-border shrink-0"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-surface-light flex items-center justify-center text-neon font-bold text-sm ring-2 ring-surface-border shrink-0">
+            {initials}
+          </div>
+        )}
+        <div className="min-w-0">
+          <span className="text-sm font-semibold text-foreground truncate block">
+            {playerName}
+          </span>
+          <span className="text-xs text-muted">{total} jogos</span>
         </div>
-      )}
-      <span className="text-sm font-semibold text-foreground truncate max-w-full">
-        {playerName}
-      </span>
-      <span className="text-[11px] text-neon font-bold" style={{ fontFamily: "var(--font-condensed)" }}>
-        {detail}
-      </span>
+        <div className="ml-auto text-right">
+          <span className="text-lg font-bold text-neon">{winRate}%</span>
+          <span className="text-[10px] text-muted block -mt-1">WR</span>
+        </div>
+      </div>
+      <div className="flex flex-col gap-1">
+        <div className="w-full h-1.5 rounded-full bg-surface-light overflow-hidden flex">
+          <div
+            className="h-full rounded-full bg-neon/50"
+            style={{ width: `${winPercent}%` }}
+          />
+          <div
+            className="h-full bg-red-500/30"
+            style={{ width: `${100 - winPercent}%` }}
+          />
+        </div>
+        <div className="flex justify-between text-[11px] text-muted">
+          <span>{wins}V</span>
+          <span>{losses}D</span>
+        </div>
+        <p className="text-[11px] text-muted leading-snug mt-0.5 text-center">{legend}</p>
+      </div>
     </div>
   );
 }
@@ -428,15 +457,21 @@ async function PlayerProfile({ paramsPromise }: { paramsPromise: Promise<{ id: s
               title="Melhor Dupla"
               playerName={bestPartner.player.name}
               playerPhoto={bestPartner.player.photoUrl}
-              detail={`${bestPartner.wins}V em ${bestPartner.total} jogos juntos`}
+              wins={bestPartner.wins}
+              losses={bestPartner.total - bestPartner.wins}
+              total={bestPartner.total}
+              legend={`Em ${bestPartner.total} jogos juntos, ${player.name.split(" ")[0]} e ${bestPartner.player.name.split(" ")[0]} venceram ${bestPartner.wins}`}
             />
           )}
           {biggestVictim && (
             <StatCard
-              title="Maior Fregues"
+              title="Maior Freguês"
               playerName={biggestVictim.player.name}
               playerPhoto={biggestVictim.player.photoUrl}
-              detail={`${biggestVictim.losses} derrotas em ${biggestVictim.total} jogos`}
+              wins={biggestVictim.losses}
+              losses={biggestVictim.total - biggestVictim.losses}
+              total={biggestVictim.total}
+              legend={`Em ${biggestVictim.total} jogos contra ${biggestVictim.player.name.split(" ")[0]}, ${player.name.split(" ")[0]} venceu ${biggestVictim.losses}`}
             />
           )}
           {biggestNemesis && (
@@ -444,7 +479,10 @@ async function PlayerProfile({ paramsPromise }: { paramsPromise: Promise<{ id: s
               title="Pedra no Sapato"
               playerName={biggestNemesis.player.name}
               playerPhoto={biggestNemesis.player.photoUrl}
-              detail={`${biggestNemesis.wins} derrotas em ${biggestNemesis.total} jogos`}
+              wins={biggestNemesis.total - biggestNemesis.wins}
+              losses={biggestNemesis.wins}
+              total={biggestNemesis.total}
+              legend={`Em ${biggestNemesis.total} jogos contra ${biggestNemesis.player.name.split(" ")[0]}, ${player.name.split(" ")[0]} perdeu ${biggestNemesis.wins}`}
             />
           )}
         </div>
