@@ -238,6 +238,9 @@ function computePlayerStats(
   // Maior algoz: quem mais venceu CONTRA este jogador
   const opponentWins = new Map<string, number>();
 
+  // Total de confrontos por oponente
+  const opponentTotal = new Map<string, number>();
+
   for (const match of playerMatches) {
     const playerData = match.players.find((p) => p.playerId === playerId)!;
     const playerTeam = playerData.team;
@@ -257,6 +260,7 @@ function computePlayerStats(
     // Adversarios (time oposto)
     const opponents = match.players.filter((p) => p.team !== playerTeam);
     for (const o of opponents) {
+      opponentTotal.set(o.playerId, (opponentTotal.get(o.playerId) || 0) + 1);
       if (playerWon) {
         opponentLosses.set(
           o.playerId,
@@ -286,19 +290,25 @@ function computePlayerStats(
     }
   }
 
-  // Maior fregues: mais derrotas contra este jogador
-  let biggestVictim: { id: string; losses: number } | null = null;
+  // Maior fregues: score ponderado (derrotas² / total), minimo 2 confrontos
+  let biggestVictim: { id: string; losses: number; total: number; score: number } | null = null;
   for (const [oppId, losses] of opponentLosses) {
-    if (!biggestVictim || losses > biggestVictim.losses) {
-      biggestVictim = { id: oppId, losses };
+    const total = opponentTotal.get(oppId) || 0;
+    if (total < 2) continue;
+    const score = (losses * losses) / total;
+    if (!biggestVictim || score > biggestVictim.score) {
+      biggestVictim = { id: oppId, losses, total, score };
     }
   }
 
-  // Maior algoz: quem mais venceu este jogador
-  let biggestNemesis: { id: string; wins: number } | null = null;
+  // Maior algoz: score ponderado (vitorias² / total), minimo 2 confrontos
+  let biggestNemesis: { id: string; wins: number; total: number; score: number } | null = null;
   for (const [oppId, wins] of opponentWins) {
-    if (!biggestNemesis || wins > biggestNemesis.wins) {
-      biggestNemesis = { id: oppId, wins };
+    const total = opponentTotal.get(oppId) || 0;
+    if (total < 2) continue;
+    const score = (wins * wins) / total;
+    if (!biggestNemesis || score > biggestNemesis.score) {
+      biggestNemesis = { id: oppId, wins, total, score };
     }
   }
 
@@ -308,10 +318,10 @@ function computePlayerStats(
       ? { player: playerMap.get(bestPartner.id)!, wins: bestPartner.wins, total: bestPartner.total }
       : null,
     biggestVictim: biggestVictim
-      ? { player: playerMap.get(biggestVictim.id)!, losses: biggestVictim.losses }
+      ? { player: playerMap.get(biggestVictim.id)!, losses: biggestVictim.losses, total: biggestVictim.total }
       : null,
     biggestNemesis: biggestNemesis
-      ? { player: playerMap.get(biggestNemesis.id)!, wins: biggestNemesis.wins }
+      ? { player: playerMap.get(biggestNemesis.id)!, wins: biggestNemesis.wins, total: biggestNemesis.total }
       : null,
   };
 }
@@ -418,7 +428,7 @@ async function PlayerProfile({ paramsPromise }: { paramsPromise: Promise<{ id: s
               title="Melhor Dupla"
               playerName={bestPartner.player.name}
               playerPhoto={bestPartner.player.photoUrl}
-              detail={`${bestPartner.wins}V em ${bestPartner.total} juntos`}
+              detail={`${bestPartner.wins}V em ${bestPartner.total} jogos juntos`}
             />
           )}
           {biggestVictim && (
@@ -426,7 +436,7 @@ async function PlayerProfile({ paramsPromise }: { paramsPromise: Promise<{ id: s
               title="Maior Fregues"
               playerName={biggestVictim.player.name}
               playerPhoto={biggestVictim.player.photoUrl}
-              detail={`${biggestVictim.losses} derrotas contra`}
+              detail={`${biggestVictim.losses} derrotas em ${biggestVictim.total} jogos`}
             />
           )}
           {biggestNemesis && (
@@ -434,7 +444,7 @@ async function PlayerProfile({ paramsPromise }: { paramsPromise: Promise<{ id: s
               title="Pedra no Sapato"
               playerName={biggestNemesis.player.name}
               playerPhoto={biggestNemesis.player.photoUrl}
-              detail={`${biggestNemesis.wins} derrotas sofridas`}
+              detail={`${biggestNemesis.wins} derrotas em ${biggestNemesis.total} jogos`}
             />
           )}
         </div>
