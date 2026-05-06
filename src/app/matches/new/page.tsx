@@ -1,11 +1,14 @@
 import { Suspense } from "react";
-import { getPlayers } from "@/lib/data";
+import { getPlayerStates } from "@/lib/data";
 import { MatchForm } from "@/components/match-form";
 
 async function MatchFormLoader() {
-  const players = await getPlayers();
+  const states = await getPlayerStates();
   return (
-    <MatchForm players={players.map((p) => ({ id: p.id, name: p.name }))} />
+    <MatchForm
+      players={states.map((s) => ({ id: s.id, name: s.name }))}
+      playerStates={states}
+    />
   );
 }
 

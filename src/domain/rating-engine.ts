@@ -207,6 +207,51 @@ export function computeRanking(
     .sort((a, b) => b.rating - a.rating);
 }
 
+export function computePlayerStates(
+  playerList: { id: string; name: string; photoUrl: string | null }[],
+  matches: MatchData[]
+): PlayerState[] {
+  const players = new Map<string, PlayerState>();
+
+  for (const p of playerList) {
+    players.set(p.id, {
+      id: p.id,
+      name: p.name,
+      photoUrl: p.photoUrl,
+      rating: INITIAL_RATING,
+      rd: INITIAL_RD,
+      lastMatchDate: null,
+      wins: 0,
+      losses: 0,
+      streak: 0,
+    });
+  }
+
+  const sortedMatches = [...matches].sort(
+    (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+  );
+
+  for (const match of sortedMatches) {
+    processMatch(players, match);
+  }
+
+  return Array.from(players.values());
+}
+
+export function previewMatchDeltas(
+  states: PlayerState[],
+  match: MatchData
+): MatchPlayerDelta[] {
+  const clone = new Map<string, PlayerState>();
+  for (const s of states) {
+    clone.set(s.id, {
+      ...s,
+      lastMatchDate: s.lastMatchDate ? new Date(s.lastMatchDate) : null,
+    });
+  }
+  return processMatch(clone, match);
+}
+
 export function computeRankingWithHistory(
   playerList: { id: string; name: string; photoUrl: string | null }[],
   matches: MatchData[]

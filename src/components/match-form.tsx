@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createMatch, updateMatch } from "@/actions/matches";
+import { previewMatchDeltas } from "@/domain/rating-engine";
+import { MatchPlayerDelta, PlayerState } from "@/domain/types";
 
 interface Player {
   id: string;
@@ -16,6 +18,7 @@ interface SetScore {
 
 interface MatchFormProps {
   players: Player[];
+  playerStates?: PlayerState[];
   editData?: {
     id: string;
     team1: [string, string];
@@ -26,7 +29,12 @@ interface MatchFormProps {
   onSuccess?: () => void;
 }
 
-export function MatchForm({ players, editData, onSuccess }: MatchFormProps) {
+export function MatchForm({
+  players,
+  playerStates,
+  editData,
+  onSuccess,
+}: MatchFormProps) {
   const router = useRouter();
   const [team1, setTeam1] = useState<[string, string]>(
     editData?.team1 || ["", ""]
@@ -44,6 +52,45 @@ export function MatchForm({ players, editData, onSuccess }: MatchFormProps) {
   const [loading, setLoading] = useState(false);
 
   const selectedIds = [...team1, ...team2].filter(Boolean);
+
+  const previewDeltas = useMemo<MatchPlayerDelta[] | null>(() => {
+    if (editData || !playerStates) return null;
+    if (!team1[0] || !team1[1] || !team2[0] || !team2[1]) return null;
+    if (new Set([...team1, ...team2]).size !== 4) return null;
+    const validSets = sets.filter(
+      (s) =>
+        s.team1Score !== s.team2Score &&
+        s.team1Score >= 0 &&
+        s.team2Score >= 0 &&
+        s.team1Score <= 10 &&
+        s.team2Score <= 10
+    );
+    if (validSets.length === 0) return null;
+    if (validSets.length % 2 === 0) {
+      let t1Sets = 0;
+      let t2Sets = 0;
+      let t1Games = 0;
+      let t2Games = 0;
+      for (const s of validSets) {
+        if (s.team1Score > s.team2Score) t1Sets++;
+        else t2Sets++;
+        t1Games += s.team1Score;
+        t2Games += s.team2Score;
+      }
+      if (t1Sets === t2Sets && t1Games === t2Games) return null;
+    }
+    try {
+      return previewMatchDeltas(playerStates, {
+        id: "preview",
+        createdAt: new Date(date + "T12:00:00"),
+        team1,
+        team2,
+        sets: validSets,
+      });
+    } catch {
+      return null;
+    }
+  }, [team1, team2, sets, date, playerStates, editData]);
 
   function availablePlayers(current: string) {
     return players.filter((p) => p.id === current || !selectedIds.includes(p.id));
@@ -318,6 +365,61 @@ export function MatchForm({ players, editData, onSuccess }: MatchFormProps) {
           </div>
         ))}
       </div>
+
+      {previewDeltas && (
+        <div className="rounded-lg border border-neon/20 bg-neon/5 p-4 animate-scale-in">
+          <h3
+            className="font-bold uppercase tracking-wide text-neon mb-3 text-sm"
+            style={{ fontFamily: "var(--font-condensed)" }}
+          >
+            Prévia de Pontos
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              {previewDeltas
+                .filter((d) => d.team === 1)
+                .map((d) => (
+                  <div
+                    key={d.playerId}
+                    className="flex justify-between items-center text-sm"
+                  >
+                    <span className="text-foreground truncate">
+                      {d.playerName}
+                    </span>
+                    <span
+                      className={`font-bold tabular-nums ${
+                        d.delta >= 0 ? "text-neon" : "text-red-400"
+                      }`}
+                    >
+                      {d.delta >= 0 ? `+${d.delta}` : d.delta}
+                    </span>
+                  </div>
+                ))}
+            </div>
+            <div className="space-y-1.5">
+              {previewDeltas
+                .filter((d) => d.team === 2)
+                .map((d) => (
+                  <div
+                    key={d.playerId}
+                    className="flex justify-between items-center text-sm"
+                  >
+                    <span className="text-foreground truncate">
+                      {d.playerName}
+                    </span>
+                    <span
+                      className={`font-bold tabular-nums ${
+                        d.delta >= 0 ? "text-neon" : "text-red-400"
+                      }`}
+                    >
+                      {d.delta >= 0 ? `+${d.delta}` : d.delta}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <button
         type="submit"

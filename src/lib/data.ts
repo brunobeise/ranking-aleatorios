@@ -1,6 +1,10 @@
 import { prisma } from "./prisma";
 import { MatchData } from "@/domain/types";
-import { computeRanking, computeRankingWithHistory } from "@/domain/rating-engine";
+import {
+  computePlayerStates,
+  computeRanking,
+  computeRankingWithHistory,
+} from "@/domain/rating-engine";
 
 export async function getPlayers() {
   return prisma.player.findMany({ orderBy: { name: "asc" } });
@@ -34,6 +38,18 @@ export async function getRanking() {
   ]);
 
   return computeRanking(
+    players.map((p) => ({ id: p.id, name: p.name, photoUrl: p.photoUrl })),
+    matches
+  );
+}
+
+export async function getPlayerStates() {
+  const [players, matches] = await Promise.all([
+    getPlayers(),
+    getAllMatchesData(),
+  ]);
+
+  return computePlayerStates(
     players.map((p) => ({ id: p.id, name: p.name, photoUrl: p.photoUrl })),
     matches
   );
